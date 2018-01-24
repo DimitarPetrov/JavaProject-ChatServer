@@ -111,7 +111,6 @@ public class ClientResponderThread extends Thread{
                             pw.println("Username: " + username + " is already used!");
                             pw.flush();
                             continue;
-
                         }
                         onlineClients.put(username, this);
                         //onlineClients.get(username).start();
