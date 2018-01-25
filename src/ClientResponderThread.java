@@ -157,6 +157,7 @@ public class ClientResponderThread extends Thread {
         } catch (IOException e) {
             System.err.println("Reading or writing through socket failed!");
             e.printStackTrace();
+            throw new RuntimeException();
         }
     }
 

@@ -40,6 +40,7 @@ public class ChatClient implements Runnable {
             } catch (IOException e) {
                 System.err.println("Problem while establishing connection through socket!");
                 e.printStackTrace();
+                throw new RuntimeException();
             }
             new Thread(new ChatClient()).start();
             String message;
@@ -59,6 +60,7 @@ public class ChatClient implements Runnable {
         } catch (IOException e) {
             System.err.println("Poblem with client socket occurred!");
             e.printStackTrace();
+            throw new RuntimeException();
         }
     }
 
@@ -76,6 +78,7 @@ public class ChatClient implements Runnable {
         } catch (IOException e) {
             System.err.println("Problem with client socket occured!");
             e.printStackTrace();
+            throw new RuntimeException();
         }
     }
 }
