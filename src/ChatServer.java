@@ -7,7 +7,7 @@ public class ChatServer {
 
     public static final int SERVER_PORT = 1337;
 
-    private static ConcurrentHashMap<String, ClientResponderThread> onlineClients= new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, CommunicationService> onlineClients= new ConcurrentHashMap<>();
 
 
 
