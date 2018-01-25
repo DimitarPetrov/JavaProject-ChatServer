@@ -15,9 +15,8 @@ public class ClientResponderThread extends Thread {
 
     public void run() {
         try {
-            PrintWriter pw = new PrintWriter(socket.getOutputStream());
-            BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            CommunicationService communicationService = new CommunicationService(pw, br, onlineClients);
+            CommunicationService communicationService =
+                    new CommunicationService(socket.getOutputStream(), socket.getInputStream(), onlineClients);
             communicationService.initialize();
             communicationService.communicate();
         } catch (IOException e) {

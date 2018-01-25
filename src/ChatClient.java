@@ -1,14 +1,14 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
 
 public class ChatClient implements Runnable {
 
     private static Socket clientSocket;
-    private static boolean closed = false;
+
+    private static boolean pendingFile;
+    private static final String FILE_CONFIRMED_SIGNAL = "File_Confirmation_Signal_35231";
+    private static final int FILE_MAX_SIZE = 16*1024;
 
     private static PrintWriter pw;
     private static BufferedReader br;
@@ -50,8 +50,10 @@ public class ChatClient implements Runnable {
                     if (message.equals("disconnect")) {
                         pw.println(message);
                         pw.flush();
-                        //closed = true;
                         break;
+                    }
+                    if(message.startsWith("send-file")){
+                        pendingFile = true;
                     }
                     pw.println(message);
                     pw.flush();
@@ -64,6 +66,22 @@ public class ChatClient implements Runnable {
         }
     }
 
+    private void receiveFile(){
+        try {
+            InputStream in = clientSocket.getInputStream();
+            OutputStream out = new FileOutputStream(br.readLine());
+            byte[] bytes = new byte[FILE_MAX_SIZE];
+            int count;
+            count = in.read(bytes);
+            out.write(bytes,0,count);
+            out.flush();
+            out.close();
+            System.out.println("File successfully received!");
+        } catch (IOException e){
+            throw new RuntimeException(e);
+        }
+    }
+
     public void run() {
         try {
             String response;
@@ -71,6 +89,16 @@ public class ChatClient implements Runnable {
                 if ((response = br.readLine()) != null) {
                     if (response.equals("disconnect")) {
                         break;
+                    }
+                    if(response.equals(FILE_CONFIRMED_SIGNAL)){
+                        receiveFile();
+                        continue;
+                    }
+                    if(pendingFile && (response.startsWith("confirm") || response.equals("cancel"))){
+                        pw.println(response);
+                        pw.flush();
+                        pendingFile = false;
+                        continue;
                     }
                     System.out.println(response);
                 }
