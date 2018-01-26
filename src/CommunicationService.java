@@ -86,6 +86,7 @@ public class CommunicationService {
                 fw.println(username + " " + password);
                 fw.flush();
                 pw.println("User: " + username + " successfully registered!");
+                pw.flush();
                 return true;
             }
             return false;
