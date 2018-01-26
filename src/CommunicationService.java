@@ -1,4 +1,5 @@
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
@@ -227,26 +228,36 @@ public class CommunicationService {
     }
 
     private void createRoom(String roomName){
-        ChatRoom chatRoom = new ChatRoom(username, onlineClients);
-        chatRoom.addMember(this);
-        chatRooms.put(roomName, chatRoom);
-        pw.println("Chat room " + roomName + " successfully created!");
-        pw.flush();
+        try {
+            ChatRoom chatRoom = new ChatRoom(username, onlineClients);
+            chatRoom.addMember(this);
+            chatRooms.put(roomName, chatRoom);
+            Files.createFile(Paths.get(roomName + "History.txt"));
+            pw.println("Chat room " + roomName + " successfully created!");
+            pw.flush();
+        } catch (IOException e){
+            throw new RuntimeException(e);
+        }
     }
 
     private void deleteRoom(String roomName){
-        if(chatRooms.get(roomName) == null){
-            pw.println("There is not such a room!");
-            pw.flush();
-            return;
-        }
-        if(username.equals(chatRooms.get(roomName).getCreator())){
-            chatRooms.remove(roomName);
-            pw.println("The room " + roomName + " successfully deleted!");
-            pw.flush();
-        } else {
-            pw.println("You don't have permission to delete this room!");
-            pw.flush();
+        try {
+            if (chatRooms.get(roomName) == null) {
+                pw.println("There is not such a room!");
+                pw.flush();
+                return;
+            }
+            if (username.equals(chatRooms.get(roomName).getCreator())) {
+                chatRooms.remove(roomName);
+                Files.delete(Paths.get(roomName + "History.txt"));
+                pw.println("The room " + roomName + " successfully deleted!");
+                pw.flush();
+            } else {
+                pw.println("You don't have permission to delete this room!");
+                pw.flush();
+            }
+        } catch (IOException e){
+            throw new RuntimeException(e);
         }
     }
 
@@ -271,9 +282,18 @@ public class CommunicationService {
             pw.flush();
             return;
         }
-        chatRooms.get(roomName).addMember(this);
-        pw.println("You have successfully joined room " + roomName + "! Welcome!");
-        pw.flush();
+        try(BufferedReader historyFile = new BufferedReader(new FileReader(roomName + "History.txt"))) {
+            chatRooms.get(roomName).addMember(this);
+            pw.println("You have successfully joined room " + roomName + "! Welcome!");
+            pw.flush();
+            String line;
+            while((line = historyFile.readLine()) != null){
+                pw.println(line);
+            }
+            pw.flush();
+        } catch (IOException e){
+            throw new RuntimeException(e);
+        }
     }
 
     private void leaveRoom(String roomName){
@@ -303,6 +323,27 @@ public class CommunicationService {
                 pw.println(user);
                 pw.flush();
             }
+        }
+    }
+
+    private void sendToRoom(String roomName, String message){
+        ChatRoom chatRoom = chatRooms.get(roomName);
+        if(chatRoom == null){
+            pw.println("There is no such a room!");
+            pw.flush();
+            return;
+        }
+        for(CommunicationService client : onlineClients.values()){
+            if(chatRoom.isMember(client) && client != this){
+                client.pw.println(username + " sent a message to your room " + roomName + ": " + message);
+                client.pw.flush();
+            }
+        }
+        try(PrintWriter fileHistory = new PrintWriter(new FileWriter(roomName + "History.txt",true))){
+            fileHistory.println(username + " sent a message to your room " + roomName + ": " + message);
+            fileHistory.flush();
+        } catch (IOException e){
+            throw new RuntimeException(e);
         }
     }
 
@@ -399,6 +440,18 @@ public class CommunicationService {
                             pw.println("There was a problem with sending your file!");
                             pw.flush();
                         }
+                        continue;
+                    }
+                    if(message.startsWith("send-room")){
+                        String[] split = message.split(" ");
+                        if(split.length < 3){
+                            pw.println("Wrong command! Try again!");
+                            pw.flush();
+                            continue;
+                        }
+                        String roomName = split[1];
+                        String m = message.substring(message.indexOf(split[2]));
+                        sendToRoom(roomName,m);
                         continue;
                     }
                     if (message.startsWith("send")) {
