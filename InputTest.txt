@@ -1,2 +1,5 @@
-login dimitar 1345894
+login dimitar 1234
+login ivan 1234
+send-file dimitar /home/dimitar/IdeaProjects/Java Practicum/ChatServer/InputTest.txt
+confirm /home/dimitar
 disconnect

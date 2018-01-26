@@ -6,17 +6,21 @@ public class ClientResponderThread extends Thread {
 
     private Socket socket;
     private ConcurrentHashMap<String, CommunicationService> onlineClients;
+    private ConcurrentHashMap<String, ChatRoom> chatRooms;
 
-    ClientResponderThread(Socket socket, ConcurrentHashMap<String, CommunicationService> onlineClients) {
+
+    ClientResponderThread(Socket socket, ConcurrentHashMap<String, CommunicationService> onlineClients,
+                          ConcurrentHashMap<String,ChatRoom> chatRooms) {
         this.socket = socket;
         this.onlineClients = onlineClients;
+        this.chatRooms = chatRooms;
     }
 
 
     public void run() {
         try {
             CommunicationService communicationService =
-                    new CommunicationService(socket.getOutputStream(), socket.getInputStream(), onlineClients);
+                    new CommunicationService(socket.getOutputStream(), socket.getInputStream(), onlineClients, chatRooms);
             communicationService.initialize();
             communicationService.communicate();
         } catch (IOException e) {

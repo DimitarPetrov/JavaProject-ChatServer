@@ -1,2 +1,5 @@
-Wrong Username or Password! Try again!
-disconnect
+Successfully logged in! Hello dimitar!
+Successfully logged in! Hello ivan!
+ivan sent you a message: ivan want to send you a file /home/dimitar/IdeaProjects/Java Practicum/ChatServer/InputTest.txt!
+Type confirm, sender's name and a path to accept or cancel and sender's name to decline!
+/home/dimitar/InputTest.txt
