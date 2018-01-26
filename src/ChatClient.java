@@ -30,7 +30,7 @@ public class ChatClient implements Runnable {
                     port = split[2];
                     try {
                         clientSocket = new Socket(host, Integer.parseInt(port));
-                    } catch (IOException e) {
+                    } catch (IOException | NumberFormatException e) {
                         System.err.println("Wrong host or port!");
                         continue;
                     }
@@ -70,7 +70,12 @@ public class ChatClient implements Runnable {
     private void receiveFile() {
         try {
             InputStream in = clientSocket.getInputStream();
-            OutputStream out = new FileOutputStream(br.readLine());
+            String path = br.readLine();
+            if(path.equals("File sending unsuccessful!")){
+                System.out.println(path);
+                return;
+            }
+            OutputStream out = new FileOutputStream(path);
             byte[] bytes = new byte[FILE_MAX_SIZE];
             int count;
             count = in.read(bytes);

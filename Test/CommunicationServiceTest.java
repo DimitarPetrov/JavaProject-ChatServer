@@ -235,7 +235,7 @@ public class CommunicationServiceTest {
         }
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void SendFileConfirmTestNotExistingFile() {
         try {
             PrintWriter fw = new PrintWriter("InputTest.txt");
@@ -266,7 +266,7 @@ public class CommunicationServiceTest {
             line = fr.readLine();
             assertEquals("Type confirm, sender's name and a path to accept or cancel and sender's name to decline!", line);
             line = fr.readLine();
-            assertEquals("There is no such a file!", line);
+            assertEquals("File sending unsuccessful!", line);
         } catch (FileNotFoundException e) {
             System.err.println("InputTest or OutputTest file is not found");
             fail();

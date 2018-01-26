@@ -159,12 +159,19 @@ public class CommunicationService {
 
     private boolean sendFile(String to, Path filePath, Path pathToSave) {
         try {
+            if(!Files.exists(pathToSave) || !Files.exists(filePath)){
+                return false;
+            }
             CommunicationService receiver = onlineClients.get(to);
             receiver.pw.println(pathToSave.toString() + '/' + filePath.getFileName());
             receiver.pw.flush();
             byte[] bytes = new byte[FILE_MAX_SIZE];
             File file = filePath.toFile();
             if (file.length() >= FILE_MAX_SIZE) {
+                pw.println("The file is too large!");
+                pw.flush();
+                onlineClients.get(to).pw.println("The file is too large!");
+                onlineClients.get(to).pw.flush();
                 return false;
             }
             InputStream in = new FileInputStream(file);
@@ -179,20 +186,14 @@ public class CommunicationService {
         } catch (FileNotFoundException e) {
             pw.println("There is no such a file!");
             pw.flush();
-            throw new RuntimeException(e);
+            return false;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private boolean fileReceiverAuthentication(String message) {
+    private boolean fileReceiverAuthentication(String receiver, Path filePath) {
         try {
-            String[] split = message.split(" ");
-            if (split.length < 3 || !split[0].equals("send-file")) {
-                return false;
-            }
-            String receiver = split[1];
-            Path filePath = Paths.get(message.substring(message.indexOf(split[2])));
             if (!sendMessage(receiver, username + " want to send you a file "
                     + filePath + "!\nType confirm, sender's name and a path to accept" +
                     " or cancel and sender's name to decline!")) {
@@ -213,9 +214,9 @@ public class CommunicationService {
                     }
                     if (!sendFile(receiver, filePath,
                             Paths.get(response.substring(response.indexOf(strings[1]))))) {
-                        pw.println("The file is too large!");
+                        pw.println("File sending unsuccessful!");
                         pw.flush();
-                        onlineClients.get(receiver).pw.println("The file is too large");
+                        onlineClients.get(receiver).pw.println("File sending unsuccessful!");
                         onlineClients.get(receiver).pw.flush();
                     }
                     break;
@@ -318,11 +319,17 @@ public class CommunicationService {
             return;
         }
         ChatRoom chatRoom = chatRooms.get(roomName);
+        boolean flag = false;
         for (String user : onlineClients.keySet()) {
             if (chatRoom.isMember(onlineClients.get(user))) {
                 pw.println(user);
                 pw.flush();
+                flag = true;
             }
+        }
+        if(!flag){
+            pw.println("There is not any online members in room: " + roomName +"!");
+            pw.flush();
         }
     }
 
@@ -361,10 +368,17 @@ public class CommunicationService {
                     if (line.startsWith("login")) {
                         String[] split = line.split(" ");
                         if (split.length < 3 || !split[0].equals("login")) {
+                            pw.println("Wrong command! Try again!");
+                            pw.flush();
                             continue;
                         }
                         username = split[1];
                         String password = split[2];
+                        if(onlineClients.containsKey(username)){
+                            pw.println("Already logged in! Please close previous session!");
+                            pw.flush();
+                            continue;
+                        }
                         if (login(username, password)) {
                             onlineClients.put(username, this);
                             break;
@@ -436,7 +450,20 @@ public class CommunicationService {
                         continue;
                     }
                     if (message.startsWith("send-file")) {
-                        if (!fileReceiverAuthentication(message)) {
+                        String[] split = message.split(" ");
+                        if (split.length < 3 || !split[0].equals("send-file")) {
+                            pw.println("Wrong command! Try again!");
+                            pw.flush();
+                            continue;
+                        }
+                        String receiver = split[1];
+                        if(receiver.equals(username)){
+                            pw.println("You can not send a file to yourself!");
+                            pw.flush();
+                            continue;
+                        }
+                        Path filePath = Paths.get(message.substring(message.indexOf(split[2])));
+                        if (!fileReceiverAuthentication(receiver,filePath)) {
                             pw.println("There was a problem with sending your file!");
                             pw.flush();
                         }
@@ -472,6 +499,11 @@ public class CommunicationService {
                             continue;
                         }
                         String roomName = message.substring(message.indexOf(split[1]));
+                        if(chatRooms.containsKey(roomName)){
+                            pw.println("Chat room with name " + roomName + " already exists!");
+                            pw.flush();
+                            continue;
+                        }
                         createRoom(roomName);
                         continue;
                     }
