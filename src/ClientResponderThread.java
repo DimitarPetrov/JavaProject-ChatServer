@@ -10,7 +10,7 @@ public class ClientResponderThread extends Thread {
 
 
     ClientResponderThread(Socket socket, ConcurrentHashMap<String, CommunicationService> onlineClients,
-                          ConcurrentHashMap<String,ChatRoom> chatRooms) {
+                          ConcurrentHashMap<String, ChatRoom> chatRooms) {
         this.socket = socket;
         this.onlineClients = onlineClients;
         this.chatRooms = chatRooms;

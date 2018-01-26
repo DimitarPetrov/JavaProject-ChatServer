@@ -135,7 +135,7 @@ public class CommunicationService {
 
     private boolean confirmFile(String message) {
         String[] split = message.split(" ");
-        if (split.length < 3) {
+        if (split.length < 3 || !split[0].equals("confirm")) {
             return false;
         }
         onlineClients.get(split[1]).pw.println("confirm " + message.substring(message.indexOf(split[2])));
@@ -148,7 +148,7 @@ public class CommunicationService {
 
     private boolean cancelFile(String message) {
         String[] split = message.split(" ");
-        if (split.length < 2) {
+        if (split.length < 2 || !split[0].equals("cancel")) {
             return false;
         }
         onlineClients.get(split[1]).pw.println("cancel");
@@ -188,7 +188,7 @@ public class CommunicationService {
     private boolean fileReceiverAuthentication(String message) {
         try {
             String[] split = message.split(" ");
-            if (split.length < 3) {
+            if (split.length < 3 || !split[0].equals("send-file")) {
                 return false;
             }
             String receiver = split[1];
@@ -227,7 +227,7 @@ public class CommunicationService {
         }
     }
 
-    private void createRoom(String roomName){
+    private void createRoom(String roomName) {
         try {
             ChatRoom chatRoom = new ChatRoom(username, onlineClients);
             chatRoom.addMember(this);
@@ -235,12 +235,12 @@ public class CommunicationService {
             Files.createFile(Paths.get(roomName + "History.txt"));
             pw.println("Chat room " + roomName + " successfully created!");
             pw.flush();
-        } catch (IOException e){
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void deleteRoom(String roomName){
+    private void deleteRoom(String roomName) {
         try {
             if (chatRooms.get(roomName) == null) {
                 pw.println("There is not such a room!");
@@ -256,12 +256,12 @@ public class CommunicationService {
                 pw.println("You don't have permission to delete this room!");
                 pw.flush();
             }
-        } catch (IOException e){
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void listRooms(){
+    private void listRooms() {
         boolean flag = false;
         for (String room : chatRooms.keySet()) {
             if (chatRooms.get(room).isActive()) {
@@ -270,40 +270,40 @@ public class CommunicationService {
                 flag = true;
             }
         }
-        if(!flag){
+        if (!flag) {
             pw.println("There aren't any active chat-rooms!");
             pw.flush();
         }
     }
 
-    private void joinRoom(String roomName){
-        if(chatRooms.get(roomName) == null){
+    private void joinRoom(String roomName) {
+        if (chatRooms.get(roomName) == null) {
             pw.println("There is not such a room!");
             pw.flush();
             return;
         }
-        try(BufferedReader historyFile = new BufferedReader(new FileReader(roomName + "History.txt"))) {
+        try (BufferedReader historyFile = new BufferedReader(new FileReader(roomName + "History.txt"))) {
             chatRooms.get(roomName).addMember(this);
             pw.println("You have successfully joined room " + roomName + "! Welcome!");
             pw.flush();
             String line;
-            while((line = historyFile.readLine()) != null){
+            while ((line = historyFile.readLine()) != null) {
                 pw.println(line);
             }
             pw.flush();
-        } catch (IOException e){
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void leaveRoom(String roomName){
-        if(chatRooms.get(roomName) == null){
+    private void leaveRoom(String roomName) {
+        if (chatRooms.get(roomName) == null) {
             pw.println("There is not such a room!");
             pw.flush();
             return;
         }
-        if(!chatRooms.get(roomName).removeMember(this)){
-            pw.println("You are not a member of room: "+ roomName + "!");
+        if (!chatRooms.get(roomName).removeMember(this)) {
+            pw.println("You are not a member of room: " + roomName + "!");
             pw.flush();
         } else {
             pw.println("You have left room " + roomName + "!");
@@ -311,38 +311,38 @@ public class CommunicationService {
         }
     }
 
-    private void listUsersFromRoom(String roomName){
-        if(chatRooms.get(roomName) == null){
+    private void listUsersFromRoom(String roomName) {
+        if (chatRooms.get(roomName) == null) {
             pw.println("There is not such a room!");
             pw.flush();
             return;
         }
         ChatRoom chatRoom = chatRooms.get(roomName);
-        for(String user : onlineClients.keySet()){
-            if(chatRoom.isMember(onlineClients.get(user))){
+        for (String user : onlineClients.keySet()) {
+            if (chatRoom.isMember(onlineClients.get(user))) {
                 pw.println(user);
                 pw.flush();
             }
         }
     }
 
-    private void sendToRoom(String roomName, String message){
+    private void sendToRoom(String roomName, String message) {
         ChatRoom chatRoom = chatRooms.get(roomName);
-        if(chatRoom == null){
+        if (chatRoom == null) {
             pw.println("There is no such a room!");
             pw.flush();
             return;
         }
-        for(CommunicationService client : onlineClients.values()){
-            if(chatRoom.isMember(client) && client != this){
+        for (CommunicationService client : onlineClients.values()) {
+            if (chatRoom.isMember(client) && client != this) {
                 client.pw.println(username + " sent a message to your room " + roomName + ": " + message);
                 client.pw.flush();
             }
         }
-        try(PrintWriter fileHistory = new PrintWriter(new FileWriter(roomName + "History.txt",true))){
+        try (PrintWriter fileHistory = new PrintWriter(new FileWriter(roomName + "History.txt", true))) {
             fileHistory.println(username + " sent a message to your room " + roomName + ": " + message);
             fileHistory.flush();
-        } catch (IOException e){
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -360,7 +360,7 @@ public class CommunicationService {
                     }
                     if (line.startsWith("login")) {
                         String[] split = line.split(" ");
-                        if (split.length < 3) {
+                        if (split.length < 3 || !split[0].equals("login")) {
                             continue;
                         }
                         username = split[1];
@@ -375,7 +375,7 @@ public class CommunicationService {
                     }
                     if (line.startsWith("register")) {
                         String[] split = line.split(" ");
-                        if (split.length < 3) {
+                        if (split.length < 3 || !split[0].equals("register")) {
                             continue;
                         }
                         username = split[1];
@@ -442,21 +442,21 @@ public class CommunicationService {
                         }
                         continue;
                     }
-                    if(message.startsWith("send-room")){
+                    if (message.startsWith("send-room")) {
                         String[] split = message.split(" ");
-                        if(split.length < 3){
+                        if (split.length < 3 || !split[0].equals("send-room")) {
                             pw.println("Wrong command! Try again!");
                             pw.flush();
                             continue;
                         }
                         String roomName = split[1];
                         String m = message.substring(message.indexOf(split[2]));
-                        sendToRoom(roomName,m);
+                        sendToRoom(roomName, m);
                         continue;
                     }
                     if (message.startsWith("send")) {
                         String[] split = message.split(" ");
-                        if (split.length < 3) {
+                        if (split.length < 3 || !split[0].equals("send")) {
                             pw.println("There was a problem with sending your message! Probably wrong command!");
                             pw.flush();
                             continue;
@@ -466,7 +466,7 @@ public class CommunicationService {
                     }
                     if (message.startsWith("create-room")) {
                         String[] split = message.split(" ");
-                        if(split.length < 2){
+                        if (split.length < 2 || !split[0].equals("create-room")) {
                             pw.println("Wrong command! Try again!");
                             pw.flush();
                             continue;
@@ -475,9 +475,9 @@ public class CommunicationService {
                         createRoom(roomName);
                         continue;
                     }
-                    if(message.startsWith("delete-room")){
+                    if (message.startsWith("delete-room")) {
                         String[] split = message.split(" ");
-                        if(split.length < 2){
+                        if (split.length < 2 || !split[0].equals("delete-room")) {
                             pw.println("Wrong command! Try again!");
                             pw.flush();
                             continue;
@@ -490,9 +490,9 @@ public class CommunicationService {
                         listRooms();
                         continue;
                     }
-                    if(message.startsWith("join-room")){
+                    if (message.startsWith("join-room")) {
                         String[] split = message.split(" ");
-                        if(split.length < 2){
+                        if (split.length < 2 || !split[0].equals("join-room")) {
                             pw.println("Wrong command! Try again!");
                             pw.flush();
                             continue;
@@ -501,9 +501,9 @@ public class CommunicationService {
                         joinRoom(roomName);
                         continue;
                     }
-                    if(message.startsWith("leave-room")){
+                    if (message.startsWith("leave-room")) {
                         String[] split = message.split(" ");
-                        if(split.length < 2){
+                        if (split.length < 2 || !split[0].equals("leave-room")) {
                             pw.println("Wrong command! Try again!");
                             pw.flush();
                             continue;
@@ -512,9 +512,9 @@ public class CommunicationService {
                         leaveRoom(roomName);
                         continue;
                     }
-                    if(message.startsWith("list-users")){
+                    if (message.startsWith("list-users")) {
                         String[] split = message.split(" ");
-                        if(split.length < 2){
+                        if (split.length < 2 || !split[0].equals("list-users")) {
                             pw.println("Wrong command! Try again!");
                             pw.flush();
                             continue;
