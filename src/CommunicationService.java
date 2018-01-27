@@ -355,11 +355,38 @@ public class CommunicationService {
         }
     }
 
+    private void initializationHelp(){
+        pw.println("Available commands:");
+        pw.println("disconnect -> disconnects you from the system!");
+        pw.println("login + username + password");
+        pw.println("register + username + password");
+        pw.flush();
+    }
+
+    private void communicationHelp(){
+        pw.println("Available commands:");
+        pw.println("disconnect -> disconnects you from the system!");
+        pw.println("list-users -> Shows online users at the moment");
+        pw.println("send + Receiver's username + message");
+        pw.println("send-file + Receiver's username + filePath");
+        pw.println("list-rooms -> Shows rooms with at least one active user");
+        pw.println("create-room + Room name");
+        pw.println("delete-room + Room's name");
+        pw.println("join-room + Room's name");
+        pw.println("leave-room + Room's name");
+        pw.println("send-room + Room's name + message");
+        pw.flush();
+    }
+
     public void initialize() {
         try {
             String line;
             while (true) {
                 if ((line = br.readLine()) != null) {
+                    if(line.equals("help")){
+                        initializationHelp();
+                        continue;
+                    }
                     if (line.equals("disconnect")) {
                         disconnected = true;
                         pw.println("disconnect");
@@ -416,6 +443,10 @@ public class CommunicationService {
             String message;
             while (!disconnected) {
                 if ((message = br.readLine()) != null) {
+                    if(message.equals("help")){
+                        communicationHelp();
+                        continue;
+                    }
                     if (filePending) {
                         do {
                             if (message.startsWith("confirm")) {

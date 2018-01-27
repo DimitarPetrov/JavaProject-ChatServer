@@ -14,6 +14,7 @@ public class ChatClient implements Runnable {
     private static BufferedReader br;
 
     public static void main(String[] args) {
+        System.out.println("Type help to see possible commands!");
         Scanner scanner = new Scanner(System.in);
         String line;
         String host;
@@ -21,6 +22,12 @@ public class ChatClient implements Runnable {
         while (true) {
             if (scanner.hasNextLine()) {
                 line = scanner.nextLine();
+                if(line.equals("help")){
+                    System.out.println("Available Commands:");
+                    System.out.println("connect + host + port -> (default host: 192.168.0.106," +
+                            " default port: 1337)");
+                    continue;
+                }
                 if (line.startsWith("connect")) {
                     String[] split = line.split(" ");
                     if (split.length < 3 || !split[0].equals("connect")) {
