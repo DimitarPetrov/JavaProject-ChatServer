@@ -101,6 +101,9 @@ public class ChatClient implements Runnable {
             while (true) {
                 if ((response = br.readLine()) != null) {
                     if (response.equals("disconnect")) {
+                        pw.close();
+                        br.close();
+                        clientSocket.close();
                         break;
                     }
                     if (response.equals(FILE_CONFIRMED_SIGNAL)) {

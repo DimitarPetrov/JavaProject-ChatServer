@@ -23,6 +23,7 @@ public class ClientResponderThread extends Thread {
                     new CommunicationService(socket.getOutputStream(), socket.getInputStream(), onlineClients, chatRooms);
             communicationService.initialize();
             communicationService.communicate();
+            socket.close();
         } catch (IOException e) {
             System.err.println("Reading or writing through socket failed!");
             e.printStackTrace();

@@ -114,12 +114,18 @@ public class CommunicationService {
     }
 
     private void disconnect() {
-        for (String key : onlineClients.keySet()) {
+        try {
             onlineClients.remove(username);
+            disconnected = true;
+            pw.println("disconnect");
+            pw.flush();
+            os.close();
+            is.close();
+            pw.close();
+            br.close();
+        } catch (IOException e){
+            throw new RuntimeException(e);
         }
-        disconnected = true;
-        pw.println("disconnect");
-        pw.flush();
     }
 
     private void listUsers() {
