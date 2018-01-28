@@ -661,6 +661,8 @@ public class CommunicationService {
                         continue;
                     }
 
+                } else {
+                    disconnect();
                 }
             }
         } catch (IOException e) {
