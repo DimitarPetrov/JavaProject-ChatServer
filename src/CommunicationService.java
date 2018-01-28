@@ -1,7 +1,11 @@
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CommunicationService {
@@ -63,9 +67,12 @@ public class CommunicationService {
     private boolean login(String username, String password) {
         try (BufferedReader br = new BufferedReader(new FileReader("Users.txt"))) {
             String line;
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+            String hashedPassword = Base64.getEncoder().encodeToString(hash);
             while ((line = br.readLine()) != null) {
                 String[] split = line.split(" ");
-                if (split[0].equals(username) && split[1].equals(password)) {
+                if (split[0].equals(username) && split[1].equals(hashedPassword)) {
                     pw.println("Successfully logged in! Hello " + username + "!");
                     pw.flush();
                     return true;
@@ -77,13 +84,18 @@ public class CommunicationService {
             throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } catch (NoSuchAlgorithmException e){
+            throw new RuntimeException(e);
         }
     }
 
     private boolean registerUser(String username, String password) {
         try (PrintWriter fw = new PrintWriter(new BufferedWriter(new FileWriter("Users.txt", true)))) {
             if (!alreadyUsed(username)) {
-                fw.println(username + " " + password);
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+                String hashedPassword = Base64.getEncoder().encodeToString(hash);
+                fw.println(username + " " + hashedPassword);
                 fw.flush();
                 pw.println("User: " + username + " successfully registered!");
                 pw.flush();
@@ -95,6 +107,8 @@ public class CommunicationService {
             throw new RuntimeException(e);
         } catch (IOException e) {
             System.err.println("Can not connect to client Socket");
+            throw new RuntimeException(e);
+        } catch (NoSuchAlgorithmException e){
             throw new RuntimeException(e);
         }
     }
@@ -378,6 +392,46 @@ public class CommunicationService {
         pw.flush();
     }
 
+    private void parseEmojis(String[] message) {
+        for (int i = 2; i < message.length; ++i) {
+            switch (message[i]) {
+                case ":D":
+                    message[i] = "😃";
+                    break;
+                case ":(":
+                    message[i] = "😞";
+                    break;
+                case ":P":
+                    message[i] = "😜";
+                    break;
+                case ":)":
+                    message[i] = "😌";
+                    break;
+                case ":'(":
+                    message[i] = "😢";
+                    break;
+                case ":*":
+                    message[i] = "😘";
+                    break;
+                case ";)":
+                    message[i] = "😉";
+                    break;
+                case ":O":
+                    message[i] = "😲";
+                    break;
+                case "(y)":
+                    message[i] = "👍";
+                    break;
+                case "(n)":
+                    message[i] = "👎";
+                    break;
+                case "<3":
+                    message[i] = "💜";
+                    break;
+            }
+        }
+    }
+
     public void initialize() {
         try {
             String line;
@@ -509,8 +563,14 @@ public class CommunicationService {
                             continue;
                         }
                         String roomName = split[1];
-                        String m = message.substring(message.indexOf(split[2]));
-                        sendToRoom(roomName, m);
+                        parseEmojis(split);
+                        StringBuilder msg = new StringBuilder();
+                        for(int i = 2; i < split.length -1; ++i){
+                            msg.append(split[i]);
+                            msg.append(" ");
+                        }
+                        msg.append(split[split.length -1]);
+                        sendToRoom(roomName, msg.toString());
                         continue;
                     }
                     if (message.startsWith("send")) {
@@ -520,7 +580,14 @@ public class CommunicationService {
                             pw.flush();
                             continue;
                         }
-                        sendMessage(split[1], message.substring(message.indexOf(split[2])));
+                        parseEmojis(split);
+                        StringBuilder msg = new StringBuilder();
+                        for(int i = 2; i < split.length -1; ++i){
+                            msg.append(split[i]);
+                            msg.append(" ");
+                        }
+                        msg.append(split[split.length -1]);
+                        sendMessage(split[1], msg.toString());
                         continue;
                     }
                     if (message.startsWith("create-room")) {
