@@ -23,6 +23,7 @@ public class CommunicationService {
 
     private boolean filePending;
     private static final int FILE_MAX_SIZE = 16 * 1024;
+    // A signal for the client that the authentication of the pending file succeeded
     private static final String FILE_CONFIRMED_SIGNAL = "File_Confirmation_Signal_35231";
 
     public CommunicationService(OutputStream os, InputStream is,
@@ -47,6 +48,14 @@ public class CommunicationService {
         is = null;
     }
 
+    /**
+     * Tests if there is a user already registered with this username.
+     *
+     * @param username
+     *          The username client is providing for his new account.
+     * @return
+     *          True if this username is already used by another user, and False otherwise.
+     */
     private boolean alreadyUsed(String username) {
         try (BufferedReader br = new BufferedReader(new FileReader("Users.txt"))) {
             String line;
@@ -64,9 +73,18 @@ public class CommunicationService {
         }
     }
 
+    /**
+     *Tests for matching username and password of already registered user.
+     *
+     * @param username
+     * @param password
+     * @return
+     *      True if username and password match and login was successful and False otherwise.
+     */
     private boolean login(String username, String password) {
         try (BufferedReader br = new BufferedReader(new FileReader("Users.txt"))) {
             String line;
+            // Cryptographic hash function for extra security.
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
             String hashedPassword = Base64.getEncoder().encodeToString(hash);
@@ -89,9 +107,21 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * Registers a new user in the system.
+     *
+     * @param username
+     *          Username of the new user.
+     * @param password
+     *          Password of the new user.
+     * @return
+     *      True if the username is not already used by another user and the registration
+     *      is successful, False otherwise.
+     */
     private boolean registerUser(String username, String password) {
         try (PrintWriter fw = new PrintWriter(new BufferedWriter(new FileWriter("Users.txt", true)))) {
             if (!alreadyUsed(username)) {
+                // Cryptographic hash function for extra security.
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
                 byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
                 String hashedPassword = Base64.getEncoder().encodeToString(hash);
@@ -113,21 +143,28 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * Disconnects a user from the system and make a proper cleanup.
+     */
     private void disconnect() {
         try {
             onlineClients.remove(username);
             disconnected = true;
+            // Notification for the other side ot the socket for the disconnection.
             pw.println("disconnect");
             pw.flush();
-            os.close();
-            is.close();
-            pw.close();
-            br.close();
+            if(os != null && is != null){
+                os.close();
+                is.close();
+            }
         } catch (IOException e){
             throw new RuntimeException(e);
         }
     }
 
+    /**
+     * Lists online users at the moment.
+     */
     private void listUsers() {
         if (onlineClients.size() == 1) {
             pw.println("There aren't any active users right now!");
@@ -142,6 +179,16 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * Sends a message to a user.
+     *
+     * @param to
+     *      The receiver's username.
+     * @param message
+     *      The message to be sent.
+     * @return
+     *      True if the message is sent successfully, and false if the receiver is not online.
+     */
     private boolean sendMessage(String to, String message) {
         if (onlineClients.get(to) != null) {
             onlineClients.get(to).pw.println(username + " sent you a message: " + message);
@@ -154,6 +201,15 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * Sends a confirmation message with the path for the file to be saved to the sender.
+     * Sends a signal that the file is confirmed to the receiver, so he could be ready to receive it.
+     *
+     * @param message
+     *      The confirmation message of the receiver.
+     * @return
+     *      False if the command is wrong and True otherwise.
+     */
     private boolean confirmFile(String message) {
         String[] split = message.split(" ");
         if (split.length < 3 || !split[0].equals("confirm")) {
@@ -167,6 +223,14 @@ public class CommunicationService {
         return true;
     }
 
+    /**
+     * Sends a canceling message to the sender.
+     *
+     * @param message
+     *      The confirmation message of the receiver.
+     * @return
+     *      False if the command is wrong and True otherwise.
+     */
     private boolean cancelFile(String message) {
         String[] split = message.split(" ");
         if (split.length < 2 || !split[0].equals("cancel")) {
@@ -178,12 +242,26 @@ public class CommunicationService {
         return true;
     }
 
+    /**
+     * Sends a file.
+     *
+     * @param to
+     *      Username of the receiver.
+     * @param filePath
+     *      The path of the file.
+     * @param pathToSave
+     *      The path where the file should be saved.
+     * @return
+     *      False if one of the paths is invalid or if the file is larger than the max size
+     *      and True otherwise.
+     */
     private boolean sendFile(String to, Path filePath, Path pathToSave) {
         try {
             if(!Files.exists(pathToSave) || !Files.exists(filePath)){
                 return false;
             }
             CommunicationService receiver = onlineClients.get(to);
+            //Send the path where the file should be saved and append the file name
             receiver.pw.println(pathToSave.toString() + '/' + filePath.getFileName());
             receiver.pw.flush();
             byte[] bytes = new byte[FILE_MAX_SIZE];
@@ -213,6 +291,17 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * Sender's part of sending a file. Sends pending to the receiver, and waiting for
+     * answer.
+     *
+     * @param receiver
+     *      Username of the receiver
+     * @param filePath
+     *      Path to the file to be send
+     * @return
+     *      False if the receiver is offline, true otherwise
+     */
     private boolean fileReceiverAuthentication(String receiver, Path filePath) {
         try {
             if (!sendMessage(receiver, username + " want to send you a file "
@@ -230,9 +319,6 @@ public class CommunicationService {
                 }
                 if (response.startsWith("confirm")) {
                     String[] strings = response.split(" ");
-                    if (strings.length < 2) {
-                        return false;
-                    }
                     if (!sendFile(receiver, filePath,
                             Paths.get(response.substring(response.indexOf(strings[1]))))) {
                         pw.println("File sending unsuccessful!");
@@ -249,6 +335,12 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * Creates chat room with specified name, also creates a history file for the new room.
+     *
+     * @param roomName
+     *      The name of the new room to be created.
+     */
     private void createRoom(String roomName) {
         try {
             ChatRoom chatRoom = new ChatRoom(username, onlineClients);
@@ -262,6 +354,12 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * Deletes a room and it's history file.
+     *
+     * @param roomName
+     *      The name of the room to be deleted.
+     */
     private void deleteRoom(String roomName) {
         try {
             if (chatRooms.get(roomName) == null) {
@@ -283,6 +381,9 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * List all the rooms with at least one active user in the moment.
+     */
     private void listRooms() {
         boolean flag = false;
         for (String room : chatRooms.keySet()) {
@@ -298,6 +399,12 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * Joins a user in a room and prints him all the history of the room.
+     *
+     * @param roomName
+     *      The name of the room you are trying to join.
+     */
     private void joinRoom(String roomName) {
         if (chatRooms.get(roomName) == null) {
             pw.println("There is not such a room!");
@@ -318,6 +425,12 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * Leaves a room.
+     *
+     * @param roomName
+     *      The name of the room you are trying to leave.
+     */
     private void leaveRoom(String roomName) {
         if (chatRooms.get(roomName) == null) {
             pw.println("There is not such a room!");
@@ -333,6 +446,12 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * Lists online members in the room at the moment.
+     *
+     * @param roomName
+     *      The name of the room.
+     */
     private void listUsersFromRoom(String roomName) {
         if (chatRooms.get(roomName) == null) {
             pw.println("There is not such a room!");
@@ -354,6 +473,14 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * Sends a message to the room, and register the message in the room history.
+     *
+     * @param roomName
+     *      The name of the room.
+     * @param message
+     *      The message to be sent.
+     */
     private void sendToRoom(String roomName, String message) {
         ChatRoom chatRoom = chatRooms.get(roomName);
         if (chatRoom == null) {
@@ -375,6 +502,9 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * Help command - list all the available commands in the initialization stage.
+     */
     private void initializationHelp(){
         pw.println("Available commands:");
         pw.println("disconnect -> disconnects you from the system!");
@@ -383,6 +513,9 @@ public class CommunicationService {
         pw.flush();
     }
 
+    /**
+     * Help command - list all the available commands in the communication stage.
+     */
     private void communicationHelp(){
         pw.println("Available commands:");
         pw.println("disconnect -> disconnects you from the system!");
@@ -398,6 +531,12 @@ public class CommunicationService {
         pw.flush();
     }
 
+    /**
+     * Parses some of the reserved keyboard combinations in emojis.
+     *
+     * @param message
+     *      Every word in the message that is being sent.
+     */
     private void parseEmojis(String[] message) {
         for (int i = 2; i < message.length; ++i) {
             switch (message[i]) {
@@ -438,6 +577,10 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * A method that implements communication between the user and the server in the
+     * initialization stage. It is responsible for the proper login or register.
+     */
     public void initialize() {
         try {
             String line;
@@ -498,6 +641,11 @@ public class CommunicationService {
         }
     }
 
+    /**
+     * A method that implements further communication between the user and the server after
+     * the initialization stage. It is responsible for every command user can use in the
+     * application to be managed.
+     */
     public void communicate() {
         try {
             String message;

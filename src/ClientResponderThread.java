@@ -26,8 +26,7 @@ public class ClientResponderThread extends Thread {
             socket.close();
         } catch (IOException e) {
             System.err.println("Reading or writing through socket failed!");
-            e.printStackTrace();
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 }

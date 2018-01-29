@@ -31,6 +31,7 @@ public class ChatClient implements Runnable {
                 if (line.startsWith("connect")) {
                     String[] split = line.split(" ");
                     if (split.length < 3 || !split[0].equals("connect")) {
+                        System.out.println("Wrong Command! Try again!");
                         continue;
                     }
                     host = split[1];
@@ -51,8 +52,7 @@ public class ChatClient implements Runnable {
             br = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         } catch (IOException e) {
             System.err.println("Problem while establishing connection through socket!");
-            e.printStackTrace();
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
         new Thread(new ChatClient()).start();
         String message;

@@ -21,8 +21,7 @@ public class ChatServer {
 
         } catch (IOException e) {
             System.err.println("ChatServer socket problem occurred!");
-            e.printStackTrace();
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 }
