@@ -751,7 +751,7 @@ public class CommunicationService {
                             pw.flush();
                             continue;
                         }
-                        String roomName = message.substring(message.indexOf(split[1]));
+                        String roomName = split[1];
                         if(chatRooms.containsKey(roomName)){
                             pw.println("Chat room with name " + roomName + " already exists!");
                             pw.flush();

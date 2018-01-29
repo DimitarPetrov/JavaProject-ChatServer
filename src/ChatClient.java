@@ -13,8 +13,11 @@ public class ChatClient implements Runnable {
     private static PrintWriter pw;
     private static BufferedReader br;
 
+    public static final String RESET = "\033[0m";
+    public static final String GREEN_BOLD = "\033[1;32m";  // GREEN
+
     public static void main(String[] args) {
-        System.out.println("Type help to see possible commands!");
+        System.out.println(GREEN_BOLD + "Type help to see possible commands!" + RESET);
         Scanner scanner = new Scanner(System.in);
         String line;
         String host;
@@ -23,15 +26,16 @@ public class ChatClient implements Runnable {
             if (scanner.hasNextLine()) {
                 line = scanner.nextLine();
                 if(line.equals("help")){
-                    System.out.println("Available Commands:");
-                    System.out.println("connect + host + port -> (default host: 192.168.0.106," +
-                            " default port: 1337)");
+                    System.out.println(GREEN_BOLD + "Available Commands:" + RESET);
+                    System.out.println(GREEN_BOLD +
+                            "connect + host + port" +
+                            " -> (default host: 192.168.0.106, default port: 1337)" + RESET);
                     continue;
                 }
                 if (line.startsWith("connect")) {
                     String[] split = line.split(" ");
                     if (split.length < 3 || !split[0].equals("connect")) {
-                        System.out.println("Wrong Command! Try again!");
+                        System.out.println(GREEN_BOLD + "Wrong Command! Try again!" + RESET);
                         continue;
                     }
                     host = split[1];
@@ -42,7 +46,7 @@ public class ChatClient implements Runnable {
                         System.err.println("Wrong host or port!");
                         continue;
                     }
-                    System.out.println("Connected to " + host + " on port: " + port);
+                    System.out.println(GREEN_BOLD + "Connected to " + host + " on port: " + port + RESET);
                     break;
                 }
             }
@@ -79,7 +83,7 @@ public class ChatClient implements Runnable {
             InputStream in = clientSocket.getInputStream();
             String path = br.readLine();
             if(path.equals("File sending unsuccessful!")){
-                System.out.println(path);
+                System.out.println(GREEN_BOLD + path + RESET);
                 return;
             }
             OutputStream out = new FileOutputStream(path);
@@ -89,7 +93,7 @@ public class ChatClient implements Runnable {
             out.write(bytes, 0, count);
             out.flush();
             out.close();
-            System.out.println("File successfully received!");
+            System.out.println(GREEN_BOLD + "File successfully received!" + RESET);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -116,7 +120,7 @@ public class ChatClient implements Runnable {
                         pendingFile = false;
                         continue;
                     }
-                    System.out.println(response);
+                    System.out.println(GREEN_BOLD + response + RESET);
                 }
             }
         } catch (IOException e) {
