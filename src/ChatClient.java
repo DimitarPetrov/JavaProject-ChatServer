@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Scanner;
 
@@ -84,10 +85,14 @@ public class ChatClient implements Runnable {
         try {
             InputStream in = clientSocket.getInputStream();
             String path = br.readLine();
-            if(path.equals("File sending unsuccessful!") ||
-                    !Files.exists(Paths.get(path).getParent())){
+            if(path.equals("File sending unsuccessful!")){
                 System.out.println(GREEN_BOLD + "File sending unsuccessful!" + RESET);
                 return;
+            }
+            Path toSave = Paths.get(path);
+
+            if(!Files.exists(toSave.getParent())){
+                path = System.getProperty("user.home") + "/Downloads/" + toSave.getFileName();
             }
             OutputStream out = new FileOutputStream(path);
             byte[] bytes = new byte[FILE_MAX_SIZE];
