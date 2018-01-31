@@ -22,7 +22,7 @@ public class CommunicationService {
     private InputStream is;
 
     private boolean filePending;
-    private static final int FILE_MAX_SIZE = 16 * 1024;
+    private static final int FILE_MAX_SIZE = 1000 * 1024;
     // A signal for the client that the authentication of the pending file succeeded
     private static final String FILE_CONFIRMED_SIGNAL = "File_Confirmation_Signal_35231";
 
@@ -257,7 +257,7 @@ public class CommunicationService {
      */
     private boolean sendFile(String to, Path filePath, Path pathToSave) {
         try {
-            if(!Files.exists(pathToSave) || !Files.exists(filePath)){
+            if(!Files.exists(filePath)){
                 return false;
             }
             CommunicationService receiver = onlineClients.get(to);

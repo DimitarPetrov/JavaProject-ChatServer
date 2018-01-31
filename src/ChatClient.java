@@ -1,5 +1,7 @@
 import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Scanner;
 
 public class ChatClient implements Runnable {
@@ -8,7 +10,7 @@ public class ChatClient implements Runnable {
 
     private static boolean pendingFile;
     private static final String FILE_CONFIRMED_SIGNAL = "File_Confirmation_Signal_35231";
-    private static final int FILE_MAX_SIZE = 16 * 1024;
+    private static final int FILE_MAX_SIZE = 1000 * 1024;
 
     private static PrintWriter pw;
     private static BufferedReader br;
@@ -82,8 +84,9 @@ public class ChatClient implements Runnable {
         try {
             InputStream in = clientSocket.getInputStream();
             String path = br.readLine();
-            if(path.equals("File sending unsuccessful!")){
-                System.out.println(GREEN_BOLD + path + RESET);
+            if(path.equals("File sending unsuccessful!") ||
+                    !Files.exists(Paths.get(path).getParent())){
+                System.out.println(GREEN_BOLD + "File sending unsuccessful!" + RESET);
                 return;
             }
             OutputStream out = new FileOutputStream(path);
