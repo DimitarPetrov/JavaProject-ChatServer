@@ -306,7 +306,7 @@ public class CommunicationService {
         try {
             if (!sendMessage(receiver, username + " want to send you a file "
                     + filePath + "!\nType confirm, sender's name and a path to accept" +
-                    " or cancel and sender's name to decline!\n If provided path is invalid the file" +
+                    " or cancel and sender's name to decline!\nIf provided path is invalid the file" +
                     " will be saved in the default Downloads folder!")) {
                 return false;
             }

@@ -2,4 +2,5 @@ Successfully logged in! Hello dimitar!
 Successfully logged in! Hello ivan!
 ivan sent you a message: ivan want to send you a file /home/dimitar/IdeaProjects/Java Practicum/ChatServer/InputTest.txt!
 Type confirm, sender's name and a path to accept or cancel and sender's name to decline!
+If provided path is invalid the file will be saved in the default Downloads folder!
 /home/dimitar/InputTest.txt

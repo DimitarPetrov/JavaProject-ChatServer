@@ -225,6 +225,8 @@ public class CommunicationServiceTest {
             line = fr.readLine();
             assertEquals("Type confirm, sender's name and a path to accept or cancel and sender's name to decline!", line);
             line = fr.readLine();
+            assertEquals("If provided path is invalid the file will be saved in the default Downloads folder!", line);
+            line = fr.readLine();
             assertEquals("The file was canceled by dimitar!", line);
         } catch (FileNotFoundException e) {
             System.err.println("InputTest or OutputTest file is not found");
@@ -265,6 +267,8 @@ public class CommunicationServiceTest {
             assertEquals("ivan sent you a message: ivan want to send you a file asd!", line);
             line = fr.readLine();
             assertEquals("Type confirm, sender's name and a path to accept or cancel and sender's name to decline!", line);
+            line = fr.readLine();
+            assertEquals("If provided path is invalid the file will be saved in the default Downloads folder!", line);
             line = fr.readLine();
             assertEquals("File sending unsuccessful!", line);
         } catch (FileNotFoundException e) {
